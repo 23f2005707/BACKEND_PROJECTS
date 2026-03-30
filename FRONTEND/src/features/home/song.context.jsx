@@ -4,7 +4,7 @@ import { createContext } from "react";
 import { useState } from "react";
 
 
-export const SongContext = createContext(); 
+export const SongContext = createContext();
 
 export const SongContextProvider = ({ children }) => {
 
@@ -14,17 +14,38 @@ export const SongContextProvider = ({ children }) => {
         "posterUrl": "https://ik.imagekit.io/72eziopbl/cohort-2/moodify/posters/Chumma__From__Vicky_Vidya_Ka_Woh_Wala_Video____DownloadMing.WS__M5-Ot98gX.jpeg",
         "title": "Chumma (From \"Vicky Vidya Ka Woh Wala Video\") [DownloadMing.WS]",
         "mood": "surprised",
-    })
+    }
+    )
+
 
 
     // loading
     const [loading, setLoading] = useState(false);
 
+    // songs list for sidebar
+    const [songsList, setSongsList] = useState([]);
+
+    // function to select a song
+    const selectSong = (selectedSong) => {
+        console.log("Song selected:", selectedSong.title)
+        setSong(selectedSong);
+        console.log(song.url);
+    };
+
+
+    const playRandomSong = () => {
+        if(songsList.length === 0) return ;
+
+        const randomIndex = Math.floor(Math.random() * songsList.length);
+        setSong(songsList[randomIndex]);
+    };
+
     return (
         <SongContext.Provider
-            value = {{ loading, setLoading, song, setSong }}
+            value={{ loading, setLoading, song, setSong, songsList, setSongsList, selectSong, playRandomSong }}
         >
             {children}
+
         </SongContext.Provider>
     )
 } 

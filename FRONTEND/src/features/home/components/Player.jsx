@@ -16,6 +16,7 @@ const formatTime = (seconds) => {
 
 const Player = () => {
     const { song } = useSong()
+    
 
     const audioRef = useRef(null)
     const progressRef = useRef(null)
@@ -28,11 +29,13 @@ const Player = () => {
     const [showSpeed, setShowSpeed] = useState(false)
     const [isMuted, setIsMuted] = useState(false)
 
-    // Reset player when song changes
+    // Reset player when song changes and auto-play
     useEffect(() => {
+        // console.log("Current song:", song?.url)
         if (audioRef.current) {
             audioRef.current.load()
-            setIsPlaying(false)
+            setIsPlaying(true)
+            audioRef.current.play()
             setCurrentTime(0)
         }
     }, [song?.url])
@@ -105,10 +108,11 @@ const Player = () => {
     if (!song) return null
 
     return (
+        
         <div className="player">
             <audio
                 ref={audioRef}
-                src={song.url}
+                src={song?.url}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={handleSongEnd}
@@ -151,7 +155,7 @@ const Player = () => {
                         onClick={() => setShowSpeed(!showSpeed)}
                         title="Playback speed"
                     >
-                        {speed}×
+                        {speed}
                     </button>
                     {showSpeed && (
                         <div className="player__speed-menu">
@@ -161,7 +165,7 @@ const Player = () => {
                                     className={`player__speed-option ${s === speed ? 'active' : ''}`}
                                     onClick={() => handleSpeedChange(s)}
                                 >
-                                    {s}×
+                                    {s}
                                 </button>
                             ))}
                         </div>

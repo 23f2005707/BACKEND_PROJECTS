@@ -17,4 +17,6 @@ router.post("/", upload.single("song"), songController.uploadSong)
 
 router.get("/", songController.getSong)
 
+router.get("/mood", songController.getSongsByMood)
+
 module.exports = router

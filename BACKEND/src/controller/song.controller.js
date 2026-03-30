@@ -64,5 +64,20 @@ async function getSong(req, res) {
     })
 }
 
+// get all Songs on basis of mood 
+async function getSongsByMood(req, res) {
 
-module.exports = {uploadSong, getSong}
+    const { mood } = req.query
+
+    const songs = await songModel.find({
+        mood 
+    })
+
+    res.status(200).json({
+        message: "songs fetched successfully.",
+        songs,
+    })
+}
+
+
+module.exports = {uploadSong, getSong, getSongsByMood}

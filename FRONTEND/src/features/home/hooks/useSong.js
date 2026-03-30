@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { SongContext } from "../song.context";
-import { getSong } from "../service/song.api";
+import { getSong, getSongsByMood } from "../service/song.api";
 
 
 export const useSong = () => {
@@ -8,7 +8,7 @@ export const useSong = () => {
     // create context and get states of song 
     const context =  useContext(SongContext)
 
-    const { loading, setLoading, song, setSong } = context 
+    const { loading, setLoading, song, setSong, songsList, setSongsList } = context 
 
 
     // handle get song function 
@@ -19,6 +19,12 @@ export const useSong = () => {
         setLoading(false)
     } 
 
+    // handle get songs by mood for sidebar
+    async function handleGetSongsByMood({ mood }) {
+        const data = await getSongsByMood({mood});
+        setSongsList(data.songs)
+    }
 
-    return ({ loading, song, handleGetSong })
+
+    return ({ loading, song, handleGetSong, songsList, handleGetSongsByMood })
 }

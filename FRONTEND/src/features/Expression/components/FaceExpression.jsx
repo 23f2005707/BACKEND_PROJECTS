@@ -7,12 +7,25 @@ export default function FaceExpression({ onClick = () => { } }) {
     const landmarkerRef = useRef(null);
     const streamRef = useRef(null);
 
-    const [ expression, setExpression ] = useState("Detecting...");
+    const [lastMood, setLastMood] = useState(null);
+    const[expression, setExpression] = useState(null);
 
     useEffect(() => {
-        init({ landmarkerRef, videoRef, streamRef });
+        init({ landmarkerRef, videoRef, streamRef,  });
+
+        // Auto-detect mood every 5 seconds
+        const interval = setInterval(async () => {
+            if (videoRef.current && videoRef.current.videoWidth > 0) {
+                const expression = await detect({ landmarkerRef, videoRef, setExpression });
+                if (expression && expression !== "Neutral" && expression !== lastMood) {
+                    setLastMood(expression);
+                    onClick(expression);
+                }
+            }
+        }, 5000);
 
         return () => {
+            clearInterval(interval);
             if (landmarkerRef.current) {
                 landmarkerRef.current.close();
             }
@@ -34,7 +47,16 @@ export default function FaceExpression({ onClick = () => { } }) {
 
         const expression = await detect({ landmarkerRef, videoRef, setExpression })
         console.log(expression)
+        setLastMood(expression);
         onClick(expression)
+    }
+
+    async function handleRandomMood() {
+        const moods = ["happy", "surprised", "sad", "neutral"];
+        const randomMood = moods[Math.floor(Math.random() * moods.length)];
+        setExpression(randomMood);
+        setLastMood(randomMood);
+        onClick(randomMood);
     }
 
 
@@ -47,7 +69,10 @@ export default function FaceExpression({ onClick = () => { } }) {
                 playsInline
             />
             <h2>{expression}</h2>
-            <button style = {{ paddingInline : "6rem", backgroundColor : "lightseagreen", border : "none", position: "absolute", left: "42%", top: "50%"}} onClick={handleClick} >Detect expression</button>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                <button style={{ width: "3rem", paddingInline: "2rem", backgroundColor: "lightseagreen", border: "none" }} onClick={handleClick}>Detect expression</button>
+                <button style={{ width: "3rem", paddingInline: "2rem", backgroundColor: "orange", border: "none" }} onClick={handleRandomMood}>Random Mood</button>
+            </div>
         </div>
     );
 }
