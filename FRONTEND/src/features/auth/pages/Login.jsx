@@ -36,7 +36,7 @@ const Login = () => {
   return (
       <main className="login-page">
         <div className="form-container">
-          <h1>Login</h1>
+          <h1>🎧 MoodTunes <span>Login</span></h1>
           
           <form onSubmit={handleSubmit}>
 
@@ -60,7 +60,10 @@ const Login = () => {
             label = "Password"
             placeholder = "Enter your password"/>
 
-            <button type = "submit">Login</button>
+            <button type = "submit" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
+            </button>
+
           </form>
           <p>Don't have an account? <Link to = "/register">Register here</Link></p>
         </div>

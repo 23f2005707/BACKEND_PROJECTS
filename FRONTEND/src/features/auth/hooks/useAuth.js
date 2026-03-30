@@ -13,6 +13,8 @@ export const useAuth = () => {
         const data = await register({username, email, password})
         setUser(data.user)
         setLoading(false)
+        alert("Registration successfully✔️")
+
     }
 
      // login handle 
@@ -29,10 +31,25 @@ export const useAuth = () => {
 
      // getMe handle 
     async function handleGetMe() {
-        setLoading(true)
-        const data = await getMe()
-        setUser(data.user)
-        setLoading(false) 
+        try{
+            setLoading(true)
+
+            const data = await getMe()
+            setUser(data.user)
+        }
+        catch(err) {
+            // handle unauthorized  
+            if(err.response.status === 401) {
+                console.log("User not logged in");
+                setUser(null);
+            }
+            else {
+                console.error("Error:", err);
+            }
+        }
+        finally {
+            setLoading(false);
+        }
     }
 
     // logout handle 

@@ -1,29 +1,133 @@
+// import { useEffect, useRef, useState } from "react";
+// import { detect, init } from "../utils/utils";
+
+
+// export default function FaceExpression({ onClick = () => { } }) {
+//     const videoRef = useRef(null);
+//     const landmarkerRef = useRef(null);
+//     const streamRef = useRef(null);
+
+//     const [lastMood, setLastMood] = useState(null);
+//     const[expression, setExpression] = useState(null);
+
+//     useEffect(() => {
+//         init({ landmarkerRef, videoRef, streamRef,  });
+
+//         // Auto-detect mood every 5 seconds
+//         const interval = setInterval(async () => {
+//             if (videoRef.current && videoRef.current.videoWidth > 0) {
+//                 const expression = await detect({ landmarkerRef, videoRef, setExpression });
+//                 if (expression && expression !== "Neutral" && expression !== lastMood) {
+//                     setLastMood(expression);
+//                     onClick(expression);
+//                 }
+//             }
+//         }, 5000);
+
+//         return () => {
+//             clearInterval(interval);
+//             if (landmarkerRef.current) {
+//                 landmarkerRef.current.close();
+//             }
+
+//             if (videoRef.current?.srcObject) {
+//                 videoRef.current.srcObject
+//                     .getTracks()
+//                     .forEach((track) => track.stop());
+//             }
+//         };
+//     }, []);
+
+//     async function handleClick() {
+//         // check video frame 
+//         if(!videoRef.current || videoRef.current.videoWidth === 0) {
+//             console.log("Video not ready yet");
+//             return ;
+//         }
+
+//         const expression = await detect({ landmarkerRef, videoRef, setExpression })
+//         console.log(expression)
+//         setLastMood(expression);
+//         onClick(expression)
+//     }
+
+//     async function handleRandomMood() {
+//         const moods = ["happy", "surprised", "sad", "neutral"];
+//         const randomMood = moods[Math.floor(Math.random() * moods.length)];
+//         setExpression(randomMood);
+//         setLastMood(randomMood);
+//         onClick(randomMood);
+//     }
+
+
+//     return (
+//         <div style={{ textAlign: "center" }}>
+//             <video
+//                 ref={videoRef}
+//                 autoPlay
+//                 style={{ width: "400px", borderRadius: "12px" }}
+//                 playsInline
+//             />
+//             <h2>{expression}</h2>
+//             <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+//                 <button style={{ width: "3rem", paddingInline: "2rem", backgroundColor: "lightseagreen", border: "none" }} onClick={handleClick}>Detect expression</button>
+//                 <button style={{ width: "3rem", paddingInline: "2rem", backgroundColor: "orange", border: "none" }} onClick={handleRandomMood}>Random Mood</button>
+//             </div>
+//         </div>
+//     );
+// }
+
+
+
+
+
 import { useEffect, useRef, useState } from "react";
 import { detect, init } from "../utils/utils";
 
 
 export default function FaceExpression({ onClick = () => { } }) {
+
     const videoRef = useRef(null);
     const landmarkerRef = useRef(null);
     const streamRef = useRef(null);
 
-    const [lastMood, setLastMood] = useState(null);
+    // const [lastMood, setLastMood] = useState(null);
     const[expression, setExpression] = useState(null);
+    const lastMoodRef = useRef(null); // ✅ FIX: useRef instead of state
+
 
     useEffect(() => {
-        init({ landmarkerRef, videoRef, streamRef,  });
+        /// INIT CAMERA + MODEL
+        init({ landmarkerRef, videoRef, streamRef });
 
         // Auto-detect mood every 5 seconds
         const interval = setInterval(async () => {
-            if (videoRef.current && videoRef.current.videoWidth > 0) {
-                const expression = await detect({ landmarkerRef, videoRef, setExpression });
-                if (expression && expression !== "Neutral" && expression !== lastMood) {
-                    setLastMood(expression);
-                    onClick(expression);
+            if (!videoRef.current || videoRef.current.videoWidth === 0) return;
+
+            try {
+                const detected = await detect({
+                    landmarkerRef,
+                    videoRef,
+                    setExpression
+                });
+
+                // ✅ Avoid duplicate calls
+                if (
+                    detected &&
+                    detected !== "neutral" &&
+                    detected !== lastMoodRef.current
+                ) {
+                    lastMoodRef.current = detected;
+                    onClick(detected); // 🔥 send to Home.jsx
                 }
+
+            } catch (err) {
+                console.log("Detection error:", err);
             }
+
         }, 5000);
 
+        // CLEAN UP
         return () => {
             clearInterval(interval);
             if (landmarkerRef.current) {
@@ -35,9 +139,15 @@ export default function FaceExpression({ onClick = () => { } }) {
                     .getTracks()
                     .forEach((track) => track.stop());
             }
-        };
-    }, []);
 
+            // if (streamRef.current) {
+            //     streamRef.current.getTracks().forEach(track => track.stop());
+            // }
+        };
+    }, [onClick]);
+
+
+    /// Manual DETECT
     async function handleClick() {
         // check video frame 
         if(!videoRef.current || videoRef.current.videoWidth === 0) {
@@ -45,34 +155,94 @@ export default function FaceExpression({ onClick = () => { } }) {
             return ;
         }
 
-        const expression = await detect({ landmarkerRef, videoRef, setExpression })
-        console.log(expression)
-        setLastMood(expression);
-        onClick(expression)
+        try {
+            const detected = await detect({ landmarkerRef, videoRef, setExpression })
+            
+            // check 
+            if(!detected) {
+                lastMoodRef.current = detected;
+                onClick(detected);
+            }
+        } catch(err) {
+            console.log(err);
+        }
+        
     }
 
+    // RANDOM MOOD
     async function handleRandomMood() {
         const moods = ["happy", "surprised", "sad", "neutral"];
         const randomMood = moods[Math.floor(Math.random() * moods.length)];
+
         setExpression(randomMood);
-        setLastMood(randomMood);
+        lastMoodRef.current = randomMood;
         onClick(randomMood);
     }
 
 
-    return (
+     return (
         <div style={{ textAlign: "center" }}>
+
             <video
                 ref={videoRef}
                 autoPlay
-                style={{ width: "400px", borderRadius: "12px" }}
                 playsInline
+                muted
+                style={{
+                    width: "400px",
+                    borderRadius: "12px",
+                    transform: "scaleX(-1)" // ✅ mirror effect
+                }}
             />
-            <h2>{expression}</h2>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                <button style={{ width: "3rem", paddingInline: "2rem", backgroundColor: "lightseagreen", border: "none" }} onClick={handleClick}>Detect expression</button>
-                <button style={{ width: "3rem", paddingInline: "2rem", backgroundColor: "orange", border: "none" }} onClick={handleRandomMood}>Random Mood</button>
+
+            <h2>{expression || "Detecting..."}</h2>
+
+            <div style={{
+                display: "flex",
+                gap: "10px",
+                justifyContent: "center"
+            }}>
+                <button
+                    onClick={handleClick}
+                    style={{
+                        padding: "10px 20px",
+                        backgroundColor: "lightseagreen",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        width: "100%"
+                    }}
+                >
+                    Detect
+                </button>
+
+                <button
+                    onClick={handleRandomMood}
+                    style={{
+                        padding: "10px 20px",
+                        backgroundColor: "orange",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        width: "100%"
+                    }}
+                >
+                    Random
+                </button>
             </div>
+
         </div>
     );
 }
+
+
+
+
+
+
+
+
+
+
+
+

@@ -114,6 +114,7 @@ async function loginController(req, res) {
 async function getMe(req, res) { // get the user data using if valid token
     // hide pass -> .select("-password")
     const user = await userModel.findById(req.user.id)
+    console.log("user:", user);
 
     res.status(200).json({
         message: "user fetched successfully",
